@@ -1,0 +1,40 @@
+{
+    "manifest": {
+        "$BASE_DIR": ".",
+        "$INPUTS_DIR": "$BASE_DIR/inputs/tutorial",
+        "$NETWORK_DIR": "$BASE_DIR/network",
+        "$COMPONENTS_DIR": "$BASE_DIR/components"
+    },
+    "target_simulator": "SSN",
+    "run": {
+        "tstop": 3000.0,
+        "dt": 0.1,
+        "r_init": {
+            "type": "uniform",
+            "E": 0.0,
+            "I": 0.0
+        },
+        "gaussian_noise": 0,
+        "method": "RK45"
+    },
+    "inputs": {
+        "file_name": "$INPUTS_DIR/tutorial5.h5",
+        "inputs_config": "$INPUTS_DIR/config.inputs.tutorial5.json"
+    },
+    "outputs": {
+        "log_file": "log.txt",
+        "outputs_dir": "$BASE_DIR/outputs/tutorial",
+        "rates_h5": "rates.SSN_example.tutorial.h5"
+    },
+    "components": {
+        "SSN_cells": "$COMPONENTS_DIR/SSN_cells",
+        "E": "config.E.json",
+        "I": "config.I.json"
+    },
+    "network": {
+        "network_config": "$NETWORK_DIR/config.network.SSN_example.json",
+        "rand_seed": 42,
+        "map_seed": 42,
+        "file_name": "$NETWORK_DIR/SSN_example_mapSeed42_netSeed42.joblib"
+    }
+}

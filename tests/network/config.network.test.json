@@ -1,0 +1,130 @@
+{
+    "manifest": {
+        "$BASE_DIR": ".",
+        "$NETWORK_DIR": "$BASE_DIR/network",
+        "$COMPONENTS_DIR": "$BASE_DIR/components"
+    },
+    "components": {
+        "SSN_cells": "$COMPONENTS_DIR/SSN_cells",
+        "E": "config.E.json",
+        "I": "config.I.json"
+    },
+    "network": {
+        "nodes": {
+            "models": [
+                "E",
+                "I"
+            ],
+            "Ncells": {
+                "E": 256,
+                "I": 256
+            },
+            "spatial_config": {
+                "type": "OriMap",
+                "deltaXY": 1,
+                "scaleXY": [
+                    16,
+                    16
+                ],
+                "sampling": "grid",
+                "mask": "none",
+                "yoke_subtypes": true,
+                "ori_map": {
+                    "kc": 3.1415,
+		    "nMap": 30
+                }
+            }
+        },
+        "edges": {
+	    "allow_singleton_nodes": false,
+	    "standardize_recurrence": true,
+	    "boundary_conditions": {
+		"type": "toroidal",
+		"extent": [16,16]
+		},
+            "spatial_tuning": {
+                "E<-E": {
+                    "kappa": 0.25,
+                    "sigma": 1.71,
+                    "j": 3.090,
+                    "sigma_j": 0.25,
+                    "presyn_type": "E",
+                    "postsyn_type": "E"
+                },
+                "I<-E": {
+                    "kappa": 0.25,
+                    "sigma": 2.56,
+                    "j": 3.990,
+                    "sigma_j": 0.25,
+                    "presyn_type": "E",
+                    "postsyn_type": "I"
+                },
+                "E<-I": {
+                    "kappa": 1.0,
+                    "sigma": 0.85,
+                    "j": -1.317,
+                    "sigma_j": 0.25,
+                    "presyn_type": "I",
+                    "postsyn_type": "E"
+                },
+                "I<-I": {
+                    "kappa": 1.0,
+                    "sigma": 0.85,
+                    "j": -1.008,
+                    "sigma_j": 0.25,
+                    "presyn_type": "I",
+                    "postsyn_type": "I"
+                }
+            },
+            "func_tuning": {
+                "E<-E": {
+                    "sigma_ori": 0.7853981633974483,
+                    "presyn_type": "E",
+                    "postsyn_type": "E"
+                },
+                "I<-E": {
+                    "sigma_ori": 0.7853981633974483,
+                    "presyn_type": "E",
+                    "postsyn_type": "I"
+                },
+                "E<-I": {
+                    "sigma_ori": 1.0472,
+                    "presyn_type": "I",
+                    "postsyn_type": "E"
+                },
+                "I<-I": {
+                    "sigma_ori": 1.0472,
+                    "presyn_type": "I",
+                    "postsyn_type": "I"
+                }
+            }
+        },
+	"extrinsic": {
+        "mapping_methods": {
+                "spatial": {
+                    "type": "nearest"
+                },
+                "functional": {
+                    "type": "interp",
+                    "method": "cubic_spline",
+                    "kwargs": {}
+                }
+            },
+            "rf_type": "circular",
+            "rf_params": {
+                "rf_size_mean": 2.0,
+                "rf_size_std": 0.0
+            },
+            "tuning_params": {
+                "mu_mean": null,
+                "mu_std": 0,
+                "sigma_mean": 40,
+                "sigma_std": 26,
+                "scale_mean": 0.5,
+                "scale_std": 0.2,
+                "offset_mean": 0.5,
+                "offset_std": 0.05
+            }
+        }
+    }
+}

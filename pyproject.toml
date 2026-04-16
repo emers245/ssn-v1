@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "ssn-v1"
+version = "0.1.0"
+description = "Stabilized Supralinear Network model of primary visual cortex (V1)"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "h5py",
+    "paramiko",
+    "matplotlib",
+    "joblib",
+    "tqdm",
+    "torch",
+    "torchsde",
+    "scikit-learn",
+    "cloudpickle",
+]
+
+[project.scripts]
+ssn-optimize      = "ssn_v1.run_optimization:main"
+ssn-random-search = "ssn_v1.run_random_search:main"
+ssn-sweep         = "ssn_v1.run_parameter_sweep:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

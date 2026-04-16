@@ -1,0 +1,24 @@
+name: ssn-v1
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.9
+  - numpy
+  - pandas
+  - scipy
+  - h5py
+  - paramiko
+  - matplotlib
+  - joblib
+  - tqdm
+  - scikit-learn
+  - cloudpickle
+  - pytorch
+  - ipykernel
+  - jupyter
+  - pip
+  - pip:
+      - torchsde
+      - ssn-v1

@@ -1,0 +1,88 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def euclidean_distance(post, pre):
+    return np.linalg.norm(post - pre)
+
+def toroidal_distance(post, pre, extent):
+    dx = np.abs(post[0] - pre[0])
+    dy = np.abs(post[1] - pre[1])
+    dx = np.minimum(dx, extent[0] - dx)
+    dy = np.minimum(dy, extent[1] - dy)
+    return np.sqrt(dx**2 + dy**2)
+
+def main():
+    np.random.seed(0)
+    extent = np.array([10.0, 10.0])
+    radius = 10.0
+
+    # pick two random points in the square (centered at origin for circular convenience)
+    # post = np.random.uniform(-extent / 2, extent / 2, size=2)
+    # pre = np.random.uniform(-extent / 2, extent / 2, size=2)
+    post = np.array([4.0, 9.0])
+    pre = np.array([6.0, 1.0])
+
+    d_euclid = euclidean_distance(post, pre)
+    d_toroid = toroidal_distance(post, pre, extent)
+
+    print(f"Points: post={post}, pre={pre}")
+    print(f"Euclidean distance: {d_euclid:.3f}")
+    print(f"Toroidal distance: {d_toroid:.3f}")
+
+    fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+
+    # left: toroidal (square)
+    ax.set_title("Toroidal wrap (square)")
+    ax.set_xlim(0, extent[0])
+    ax.set_ylim(0, extent[1])
+    ax.scatter(post[0], post[1], color="tab:red", label="post")
+    ax.scatter(pre[0], pre[1], color="tab:blue", label="pre")
+
+    # straight Euclidean segment inside the box
+    ax.plot(
+        [post[0], pre[0]],
+        [post[1], pre[1]],
+        color="gray",
+        linestyle=":",
+        linewidth=1.5,
+        label="Euclidean"
+    )
+
+    # wrapped segment representing toroidal shortest path
+    offsets = np.array([
+        [0, 0],
+        [extent[0], 0], [-extent[0], 0],
+        [0, extent[1]], [0, -extent[1]],
+        [extent[0], extent[1]], [extent[0], -extent[1]],
+        [-extent[0], extent[1]], [-extent[0], -extent[1]],
+    ])
+    best_pre = None
+    best_offset = None
+    best_dist = np.inf
+    for offset in offsets:
+        candidate = pre + offset
+        dist = np.linalg.norm(post - candidate)
+        if dist < best_dist:
+            best_dist = dist
+            best_pre = candidate
+            best_offset = offset
+
+    d_toroid = best_dist
+    # path starting near the post copy
+    ax.plot(
+        [post[0], best_pre[0]], [post[1], best_pre[1]],
+        color="k", linestyle="--", linewidth=1.5, label="Toroidal (post view)"
+    )
+    # matching path starting near the pre copy
+    best_post = post - best_offset
+    ax.plot(
+        [pre[0], best_post[0]], [pre[1], best_post[1]],
+        color="k", linestyle="--", linewidth=1.5, alpha=0.6, label="Toroidal (pre view)"
+    )
+    ax.legend(loc="upper right")
+
+    plt.tight_layout()
+    plt.show()
+
+if __name__ == "__main__":
+    main()
