@@ -1,1 +1,0 @@
-{"tstop": 3000.0, "dt": 0.1, "r_init": {"type": "uniform", "E": 0.0, "I": 0.0}, "gaussian_noise": 0, "method": "RK45"}
