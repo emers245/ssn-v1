@@ -1293,7 +1293,7 @@ class SSN:
             if events is None:
                 ys = torchsde.sdeint(sde, y0_t, t_t, method=sde_method, dt=dt_sde)
                 # ys shape: (T, B, N)
-                y_batch = ys.detach().cpu().numpy().transpose(1, 2, 0)  # (B, N, T)
+                y_batch = np.maximum(ys.detach().cpu().numpy().transpose(1, 2, 0), 0.0)  # (B, N, T)
                 y_out = y_batch[0]  # backward-compatible primary output
                 self.outputs = OptimizeResult({
                     't': np.array(t),
@@ -1355,10 +1355,10 @@ class SSN:
                 if terminal_triggered:
                     break
 
-            y_batch = np.stack(y_series_batch, axis=0).transpose(1, 2, 0)  # (B, N, T)
+            y_batch = np.maximum(np.stack(y_series_batch, axis=0).transpose(1, 2, 0), 0.0)  # (B, N, T)
             self.outputs = OptimizeResult({
                 't': np.array(t_series),
-                'y': np.array(y_series).T,
+                'y': np.maximum(np.array(y_series).T, 0.0),
                 'y_batch': y_batch,
                 't_events': [np.array(v) for v in t_events],
                 'y_events': [np.array(v) for v in y_events],
