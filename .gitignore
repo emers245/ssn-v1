@@ -56,3 +56,7 @@ htmlcov/
 optimization_runs/
 random_search_runs/
 param_sweep/
+
+# Tutorial
+tutorial/inputs
+tutorial/outputs
