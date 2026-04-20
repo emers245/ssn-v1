@@ -1,0 +1,100 @@
+{
+    "manifest": {
+        "$BASE_DIR": ".",
+        "$NETWORK_DIR": "$BASE_DIR/network",
+        "$COMPONENTS_DIR": "$BASE_DIR/components"
+    },
+    "components": {
+        "SSN_cells": "$COMPONENTS_DIR/SSN_cells",
+        "E": "config.E.json",
+        "I": "config.I.json"
+    },
+    "network": {
+        "nodes": {
+            "models": [
+                "E",
+                "I"
+            ],
+            "Ncells": {
+                "E": 64,
+                "I": 64
+            },
+            "spatial_config": {
+                "type": "OriMap",
+                "deltaXY": 2.0,
+                "scaleXY": [
+                    16,
+                    16
+                ],
+                "sampling": "grid",
+                "mask": "circle",
+                "yoke_subtypes": true,
+                "ori_map": {
+                    "Ncycles": 8,
+                    "kc": 1,
+                    "nMap": 30
+                }
+            }
+        },
+        "edges": {
+	    "allow_singleton_nodes": false,
+	    "standardize_recurrence": true,
+            "spatial_tuning": {
+                "E<-E": {
+                    "kappa": 0.2,
+                    "sigma": 8,
+                    "j": 0.5,
+                    "sigma_j": 0.25,
+                    "presyn_type": "E",
+                    "postsyn_type": "E"
+                },
+                "I<-E": {
+                    "kappa": 0.2,
+                    "sigma": 12,
+                    "j": 1.9,
+                    "sigma_j": 0.25,
+                    "presyn_type": "E",
+                    "postsyn_type": "I"
+                },
+                "E<-I": {
+                    "kappa": 1.0,
+                    "sigma": 4,
+                    "j": -0.460,
+                    "sigma_j": 0.25,
+                    "presyn_type": "I",
+                    "postsyn_type": "E"
+                },
+                "I<-I": {
+                    "kappa": 1.0,
+                    "sigma": 4,
+                    "j": -0.445,
+                    "sigma_j": 0.25,
+                    "presyn_type": "I",
+                    "postsyn_type": "I"
+                }
+            },
+            "func_tuning": {
+                "E<-E": {
+                    "sigma_ori": 0.7853981633974483,
+                    "presyn_type": "E",
+                    "postsyn_type": "E"
+                },
+                "I<-E": {
+                    "sigma_ori": 0.7853981633974483,
+                    "presyn_type": "E",
+                    "postsyn_type": "I"
+                },
+                "E<-I": {
+                    "sigma_ori": 0.7853981633974483,
+                    "presyn_type": "I",
+                    "postsyn_type": "E"
+                },
+                "I<-I": {
+                    "sigma_ori": 0.7853981633974483,
+                    "presyn_type": "I",
+                    "postsyn_type": "I"
+                }
+            }
+        }
+    }
+}
