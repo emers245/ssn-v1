@@ -1093,7 +1093,8 @@ class SSN:
                 T_input = self.stim_params['temporal']['params']['T'] # duration of input vector in ms
                 t_step_input = self.stim_params['temporal']['params']['t_steps'] # time step of input vector in ms
             else:
-                print("SSN Warning: No input stimulus parameters found. Assuming input duration and time step match runtime parameters.")
+                if self.verbose:
+                    print("SSN Warning: No input stimulus parameters found. Assuming input duration and time step match runtime parameters.")
                 T_input = self.run_params['tstop'] # Assume duration of input matches the runtime duration
                 t_step_input = T_input / self.h.shape[1] # Assume time step of input matches the runtime duration divided by number of input time points
             #print(len(np.arange(0, T_input, t_step_input)), self.h.shape)
@@ -1625,7 +1626,8 @@ class SSN:
                 input_config_path = c["inputs"]["inputs_config"].replace("$INPUTS_DIR", inputs_dir)
             else:
                 # Warning
-                print("SSN WARNING: No input configuration file specified in config. Using default input configuration.")
+                if self.verbose:
+                    print("SSN WARNING: No input configuration file specified in config. Using default input configuration.")
                 input_config_path = os.path.join(inputs_dir, f"./inputs/config.inputs.json")
             
             # Get server location if one included
@@ -1649,8 +1651,9 @@ class SSN:
                     self.stim_file = c["file_name"]
                     self.stim_model = c["model"]
             else:
-                print(f"SSN WARNING: Input configuration file not found at {input_config_path}. Using default input configuration.")
-        else:
+                if self.verbose:
+                    print(f"SSN WARNING: Input configuration file not found at {input_config_path}. Using default input configuration.")
+        else:  
             if self.verbose:
                 print(f"Trying to load input configuration from {self.inputs_server}...")
             if username is None:

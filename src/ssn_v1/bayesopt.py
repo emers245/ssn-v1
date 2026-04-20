@@ -14,6 +14,7 @@ References:
   Wu et al. (2024)
 """
 
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Any, Dict, List, Optional, Tuple, Callable, Union
@@ -182,8 +183,8 @@ class bayesopt:
         node_seed = kwargs.get('node_seed', random_state) #random state for node instantiation
         use_feas = kwargs.get('use_feas', True) #use feasibility model
         evaluate_feasibility = kwargs.get('evaluate_feasibility', lambda x: x == 1) #Default: feasibility value must equal 1 to be accepted
-        kernel_cost = kwargs.get('kernel_cost', Matern(nu=2.5, length_scale=np.ones((n_params,)), length_scale_bounds=(0.001, 100.0))) # kernel for cost GP #+ WhiteKernel(noise_level=1, noise_level_bounds=(1e-8, 1e2))) #kernel for cost GP
-        kernel_feas = kwargs.get('kernel_feas', Matern(nu=2.5, length_scale=np.ones((n_params,)),length_scale_bounds=(0.001, 100.0))) # kernel for feasibility GP # + WhiteKernel()) #kernel for feasibility GP
+        kernel_cost = kwargs.get('kernel_cost', Matern(nu=2.5, length_scale=np.ones((n_params,)), length_scale_bounds=(0.001, 100.0)) + WhiteKernel(noise_level=1, noise_level_bounds=(1e-8, 1e2))) #kernel for cost GP
+        kernel_feas = kwargs.get('kernel_feas', Matern(nu=2.5, length_scale=np.ones((n_params,)),length_scale_bounds=(0.001, 100.0)) + WhiteKernel()) #kernel for feasibility GP
         n_candidates = kwargs.get('n_candidates', 1000) #number of parameterization to consider on each iteration
         debug = kwargs.get('debug', False) #debug mode
         track_acquisition = kwargs.get('track_acquisition', False) #this optionally tracks the acquisition function values for all candidate parameters. Ordinarily, you will not enable this as it will consume a lot of memory.
@@ -192,13 +193,13 @@ class bayesopt:
         kernel_fit_schedule = kwargs.get('kernel_fit_schedule', None)
         use_log_cost = kwargs.get('use_log_cost', False) #apply log transformation to cost values before GP fitting
         feas_acq_threshold = kwargs.get('feas_acq_threshold', None) #threshold below which feasibility scales acquisition; None means always multiply (default behavior)
+        suppress_warnings = kwargs.get('suppress_warnings', False) #suppress sklearn GP convergence warnings
         
-        # Import tqdm if verbose (needed for progress bar)
-        if verbose:
+        # Import tqdm for progress bar (only when not verbose)
+        if not verbose:
             try:
                 from tqdm import tqdm as tqdm_bar
             except ImportError:
-                # Fallback if tqdm is not available
                 tqdm_bar = None
         else:
             tqdm_bar = None
@@ -364,8 +365,8 @@ class bayesopt:
 
             # fit/update GP on existing data (optionally skip kernel hyperparameter optimization)
             if use_feas:
-                self.gp_feas = self._update_surrogate(self.gp_feas, self.history_params, self.history_feas, debug=debug, plot_params=plot_params, fit_kernel=fit_kernel)
-            self.gp_cost = self._update_surrogate(self.gp_cost, self.history_costParams, self.history_costs, debug=debug, plot_params=plot_params, use_log_cost=use_log_cost, fit_kernel=fit_kernel)
+                self.gp_feas = self._update_surrogate(self.gp_feas, self.history_params, self.history_feas, debug=debug, plot_params=plot_params, fit_kernel=fit_kernel, suppress_warnings=suppress_warnings)
+            self.gp_cost = self._update_surrogate(self.gp_cost, self.history_costParams, self.history_costs, debug=debug, plot_params=plot_params, use_log_cost=use_log_cost, fit_kernel=fit_kernel, suppress_warnings=suppress_warnings)
 
             # Track GP kernel hyperparameters
             if track_gp_params:
@@ -424,10 +425,12 @@ class bayesopt:
                 self.history_costParams.append(params)
                 self.history_costs.append(cost_val)   
     
-            if verbose:
-                print(f"Iteration {iteration+1}/{n_iter}: new loss={cost_val:.4f}, best so far={best_cost:.4f}")
-            elif tqdm_bar:
+            if tqdm_bar:
                 iteration_iterator.set_postfix({"loss": f"{cost_val:.4f}", "best": f"{best_cost:.4f}"})
+                if verbose:
+                    iteration_iterator.write(f"Iteration {iteration+1}/{n_iter}: new loss={cost_val:.4f}, best so far={best_cost:.4f}")
+            elif verbose:
+                print(f"Iteration {iteration+1}/{n_iter}: new loss={cost_val:.4f}, best so far={best_cost:.4f}")
     
         overall_best_idx = np.argmin(self.history_costs)
         self.params = self._get_params_dict(self.history_costParams[overall_best_idx])
@@ -459,7 +462,7 @@ class bayesopt:
             feas_mean, feas_std = self.gp_feas.predict(candidates, return_std=True)
             # clamp feasible predictions to [0,1]
             #feas_est = np.clip(feas_mean, 0, 1)
-            Z_feas = (feas_mean - 0.5) / feas_std
+            Z_feas = (feas_mean - 0.5) / (feas_std + 1e-10) # standardize around 0.5 (the decision boundary) instead of 0
             feas_est = stats.norm.cdf(Z_feas)
 
         # Predict cost
@@ -491,7 +494,7 @@ class bayesopt:
         else:
             return new_theta
 
-    def _update_surrogate(self, gp: Callable, theta: list, cost: list, debug=False, plot_params = {'param_names' : []}, use_log_cost=False, fit_kernel: bool = True):
+    def _update_surrogate(self, gp: Callable, theta: list, cost: list, debug=False, plot_params = {'param_names' : []}, use_log_cost=False, fit_kernel: bool = True, suppress_warnings: bool = False):
         """
         Update the surrogate model:
             - Fit the GP to the observed data (theta, cost)
@@ -530,12 +533,20 @@ class bayesopt:
         
         # If we're not fitting kernel hyperparameters on this call, temporarily
         # disable the GP optimizer so `fit()` will not change kernel_.
+        def _fit(gp, X, y):
+            if suppress_warnings:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    gp.fit(X, y)
+            else:
+                gp.fit(X, y)
+
         if not fit_kernel:
             # If kernel_ is not already present, optimization will be called anyway
             if not hasattr(gp, 'kernel_'):
                 # Send a warning
                 print("Warning: fit_kernel=False but GP has not been previously fitted. Fitting will proceed with kernel optimization.")
-                gp.fit(np.array(theta), cost_array)
+                _fit(gp, np.array(theta), cost_array)
             else:
                 # Store the original optimizer, n_restarts_optimizer, and kernel to restore after fitting
                 orig_optimizer = getattr(gp, 'optimizer', None)
@@ -547,7 +558,7 @@ class bayesopt:
                     gp.optimizer = None
                     if orig_restarts is not None:
                         gp.n_restarts_optimizer = 0
-                    gp.fit(np.array(theta), cost_array)
+                    _fit(gp, np.array(theta), cost_array)
                 finally:
                     # restore the original optimizer settings and kernel
                     gp.optimizer = orig_optimizer
@@ -557,7 +568,7 @@ class bayesopt:
                         gp.kernel = orig_kernel
         else:
             # Fit gp normally (optimize kernel hyperparameters)
-            gp.fit(np.array(theta), cost_array)
+            _fit(gp, np.array(theta), cost_array)
         
         if debug:
             bounds = np.array([self.bounds[key] for key in plot_params['param_names']])
