@@ -140,17 +140,6 @@ python make_inputs.py
 python make_targets.py
 ```
 
-### 3. Stochastic SSN — [sde_tutorial/tutorial_sde_bayesopt.ipynb](sde_tutorial/tutorial_sde_bayesopt.ipynb)
-
-Demonstrates Bayesian optimization on a minimal 2-neuron (1 E, 1 I) stochastic SSN with additive noise, including ISN stability analysis.
-
-**Before running:**
-```bash
-cd sde_tutorial
-python make_inputs.py
-python make_targets.py
-```
-
 ## Testing
 
 ```bash
